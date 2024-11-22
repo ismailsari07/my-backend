@@ -14,13 +14,6 @@ app.use(cors({
     credentials: true                // Allow cookies if needed
 }));
 
-
-
-app.get('/', async (req: Request, res: Response) => {
-    //res.set('Access-Control-Allow-Origin', '*');
-    //res.send("Hello from backend");
-})
-
 app.get('/GetUsers', async (req: Request, res: Response) => {
     try {
         const result = await db.query('SELECT * FROM users');
@@ -31,6 +24,7 @@ app.get('/GetUsers', async (req: Request, res: Response) => {
       }
   });
   
+// Save the user's information
 app.post('/SetUser', async (req: Request, res: Response) => {
     const { userName, country, phoneNumber, email, password } = req.body;
     let result: Output;
@@ -44,18 +38,16 @@ app.post('/SetUser', async (req: Request, res: Response) => {
             VALUES ('${userName}', '${email}', '${hashedPassword}', '${phoneNumber}', '${country}', current_timestamp);`);
 
         result = {Response: {}, Status: resultQuery.rowCount === 1, Error: []};
-        res.json(result);
       } catch (err) {
         result = {Response: {}, Status: false, Error: []};
-        res.json(result);
-        res.status(500).send('Internal Server Error');
       }
+    res.json(result);
 });
 
+// Sign in 
 app.post('/Register', async (req: Request, res: Response) => {
     const { email, password } = req.body;
     let result: Output;
-    debugger;
 
     try {
         const resultQuery = await db.query(`SELECT PASSWORD FROM USERS WHERE EMAIL = '${email}';`)
@@ -65,23 +57,45 @@ app.post('/Register', async (req: Request, res: Response) => {
 
             if (isMatch) {
                 result = {Response: {}, Status: true, Error: []};
-                res.json(result);
             }
             else {
                 result = {Response: {}, Status: false, Error: [{ErrorCode: 493974, ErrorMessage: 'Email Or Password were wrong'}]};
-                res.json(result);
             }
         }
         else {
             result = {Response: {}, Status: false, Error: [{ErrorCode: 493973, ErrorMessage: 'Email Or Password were wrong'}]};
-            res.json(result);
         }
-      } catch (err) {
-        result = {Response: {}, Status: false, Error: [{ErrorCode: 404, ErrorMessage: 'SERVER ERROR'}]};
-        res.json(result);
-        res.status(500).send('Internal Server Error');
-      }
+    } catch (err) {
+      result = {Response: {}, Status: false, Error: [{ErrorCode: 404, ErrorMessage: 'SERVER ERROR'}]};
+    }
+    res.json(result);
 })
+
+// featured product
+app.get('/GetFeturedProducts', async (req: Request, res: Response) => {
+    let result: Output;
+    try {
+      const resultQuery = await db.query("select * from featured_prodcuts;");
+      result = {Response: resultQuery.rows, Status: true, Error: []};
+    } catch (err) {
+      result = {Response: {}, Status: false, Error: []};
+    }
+    res.json(result);
+})
+
+// get products
+
+app.get('GetProducts', async (req: Request, res: Response) => {
+  let result: Output;
+  try {
+    const resultQuery = await db.query("select * from products;");
+    result = {Response: resultQuery.rows, Status: true, Error: []};
+  } catch (err) {
+    result = {Response: {}, Status: false, Error: []};
+  }
+  res.json(result);
+})
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
