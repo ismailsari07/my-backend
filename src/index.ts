@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import {Output, User} from "./model";
 
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 const app = express();
 const bcrypt = require('bcrypt');
 const db = require('./db');
@@ -85,7 +86,7 @@ app.get('/GetFeturedProducts', async (req: Request, res: Response) => {
 
 // get products
 
-app.get('GetProducts', async (req: Request, res: Response) => {
+app.get('/GetProducts', async (req: Request, res: Response) => {
   let result: Output;
   try {
     const resultQuery = await db.query("select * from products;");
@@ -96,6 +97,35 @@ app.get('GetProducts', async (req: Request, res: Response) => {
   res.json(result);
 })
 
+// send email
+
+app.post('/Contact', async (req: Request, res: Response) => {
+  const {name, email, message} = req.body;
+  let result: Output;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'xismail.sari@gmail.com',
+      pass: 'jqu73.va4*hAlr'
+    },
+  });
+
+  const mailOptions = {
+    from: email,
+    to: 'xismail.sari@gmail.com',
+    subject: `Contact form message from ${name}`,
+    text: message
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    result = {Response: {}, Status: true, Error: [{ErrorCode: 0, ErrorMessage: 'Message sent successfully'}]};
+  } catch (error) {
+    result = {Response: {}, Status: false, Error: [{ErrorCode: 0, ErrorMessage: 'Failed to send message'}]};
+  }
+  res.json(result);
+});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
